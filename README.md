@@ -1,4 +1,4 @@
-# Microcontroller Embedded Systems
+# Microcontroller Embedded System
 
 This repository contains C source code, lab exercises, and reference manuals for my Microcontroller course.
 
