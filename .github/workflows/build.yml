@@ -1,0 +1,37 @@
+# Compiles every lab program for the ATmega328P (16 MHz) with avr-gcc,
+# and keeps the .hex files as a downloadable artifact.
+name: Build labs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install avr-gcc
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq gcc-avr avr-libc binutils-avr
+      - name: Compile all labs
+        run: |
+          set -e
+          mkdir -p hex
+          for src in lab-*/*.c; do
+            name="$(dirname "$src")_$(basename "$src" .c)"
+            echo "::group::$src"
+            avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -Wall -o "hex/$name.elf" "$src"
+            avr-objcopy -O ihex -R .eeprom "hex/$name.elf" "hex/$name.hex"
+            avr-size "hex/$name.elf"
+            echo "::endgroup::"
+          done
+          echo "Compiled $(ls hex/*.hex | wc -l) programs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab-hex-files
+          path: hex/*.hex
